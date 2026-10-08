@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "drnoob_mt5": {
+      "type": "http",
+      "url": "https://drnoob.saeid00065.workers.dev/mcp",
+      "bearer_token_env_var": "DRNOOB_MCP_TOKEN"
+    }
+  }
+}

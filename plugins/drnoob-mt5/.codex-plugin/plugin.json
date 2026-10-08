@@ -1,0 +1,18 @@
+{
+  "name": "drnoob-mt5",
+  "version": "1.0.0",
+  "description": "Read closed MetaTrader 5 trades synced by the drnoob Worker.",
+  "author": {
+    "name": "SaeidFaghihi"
+  },
+  "interface": {
+    "displayName": "drnoob MT5",
+    "shortDescription": "Query your synced MetaTrader 5 trades.",
+    "longDescription": "Connects Codex to your read-only drnoob MetaTrader 5 trade journal.",
+    "developerName": "SaeidFaghihi",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "Show my synced MetaTrader 5 accounts and recent closed trades."
+  },
+  "mcpServers": "./.mcp.json"
+}
