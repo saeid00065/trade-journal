@@ -32,3 +32,7 @@ Configure an Expert Advisor to POST closed deals to `https://drnoob.<your-subdom
 ```
 
 In MT4/MT5, add the Worker origin to **Tools → Options → Expert Advisors → Allow WebRequest for listed URL**. Keep the ingest token in the EA input settings, never in source control.
+
+## MT5 Expert Advisor
+
+Copy `metatrader/DrnoobTradeSync.mq5` to `MQL5/Experts`, compile it in MetaEditor, and attach it to any chart. Set its `ApiToken` input to the Worker ingest token. It sends completed buy and sell deals every 60 seconds and cannot trade, modify orders, or access your broker password.
