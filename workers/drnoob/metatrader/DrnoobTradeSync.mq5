@@ -4,7 +4,7 @@
 input string Endpoint = "https://drnoob.saeid00065.workers.dev/v1/trades";
 input string ApiToken = "";
 input int PollSeconds = 60;
-input int InitialHistoryDays = 7;
+input int InitialHistoryDays = 3650;
 
 datetime lastSync;
 
