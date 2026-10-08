@@ -92,6 +92,54 @@ async function dashboard(request: Request, env: Env) {
   return new Response(`<!doctype html><title>drnoob | Trade journal</title><style>${styles}</style><main><header><div><h1>drnoob</h1><p>Read-only MetaTrader trade journal</p></div><form method="post" action="/logout"><button>Sign out</button></form></header><form class="toolbar" method="get"><input name="accountId" value="${escapeHtml(accountId)}" placeholder="MetaTrader account number" required><button>View trades</button></form>${accountId ? `<p>${rows.length} most recent closed trades for account ${escapeHtml(accountId)}</p><table><thead><tr><th>Closed</th><th>Symbol</th><th>Side</th><th>Volume</th><th>Profit</th><th>Commission</th><th>Swap</th></tr></thead><tbody>${body}</tbody></table>` : "<p>Enter the MetaTrader account number used by the Expert Advisor.</p>"}</main>`, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
 }
 
+type McpRequest = { id?: string | number | null; method?: string; params?: Record<string, unknown> };
+
+const mcpResponse = (id: McpRequest["id"], result: unknown) =>
+  Response.json({ jsonrpc: "2.0", id: id ?? null, result });
+
+const mcpError = (id: McpRequest["id"], code: number, message: string) =>
+  Response.json({ jsonrpc: "2.0", id: id ?? null, error: { code, message } });
+
+async function mcp(request: Request, env: Env) {
+  let message: McpRequest;
+  try {
+    message = await request.json();
+  } catch {
+    return mcpError(null, -32700, "Invalid JSON");
+  }
+  if (message.method === "initialize") {
+    return mcpResponse(message.id, {
+      protocolVersion: "2025-06-18",
+      capabilities: { tools: {} },
+      serverInfo: { name: "drnoob-mt5", version: "1.0.0" },
+    });
+  }
+  if (message.method === "notifications/initialized") return new Response(null, { status: 202 });
+  if (message.method === "tools/list") {
+    return mcpResponse(message.id, {
+      tools: [
+        { name: "list_mt5_accounts", description: "List MetaTrader accounts with synced closed-trade counts.", inputSchema: { type: "object", properties: {}, additionalProperties: false } },
+        { name: "list_mt5_trades", description: "List recent closed trades for one synced MetaTrader account.", inputSchema: { type: "object", properties: { accountId: { type: "string", description: "MetaTrader account number" }, limit: { type: "number", minimum: 1, maximum: 500 } }, required: ["accountId"], additionalProperties: false } },
+      ],
+    });
+  }
+  if (message.method === "tools/call") {
+    const name = message.params?.name;
+    const args = (message.params?.arguments ?? {}) as Record<string, unknown>;
+    if (name === "list_mt5_accounts") {
+      const accounts = (await env.TRADES.prepare("SELECT account_id, COUNT(*) AS trade_count, MAX(close_time) AS latest_close FROM mt_trades GROUP BY account_id ORDER BY latest_close DESC").all()).results;
+      return mcpResponse(message.id, { content: [{ type: "text", text: JSON.stringify(accounts) }] });
+    }
+    if (name === "list_mt5_trades" && typeof args.accountId === "string") {
+      const limit = typeof args.limit === "number" ? Math.max(1, Math.min(500, Math.floor(args.limit))) : 100;
+      const trades = (await env.TRADES.prepare("SELECT * FROM mt_trades WHERE account_id = ? ORDER BY close_time DESC LIMIT ?").bind(args.accountId, limit).all()).results;
+      return mcpResponse(message.id, { content: [{ type: "text", text: JSON.stringify(trades) }] });
+    }
+    return mcpError(message.id, -32602, "Unknown tool or invalid arguments");
+  }
+  return mcpError(message.id, -32601, "Method not found");
+}
+
 export default {
   async fetch(request, env): Promise<Response> {
     const url = new URL(request.url);
@@ -104,6 +152,7 @@ export default {
     if (url.pathname === "/logout" && request.method === "POST") return new Response(null, { status: 303, headers: { Location: "/", "Set-Cookie": "drnoob_session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0" } });
     if (url.pathname === "/") return (await panelAuthorized(request, env)) ? dashboard(request, env) : new Response(loginPage(), { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
     if (!authorized(request, env)) return json({ error: "Unauthorized" }, 401);
+    if (request.method === "POST" && url.pathname === "/mcp") return mcp(request, env);
 
     if (request.method === "POST" && url.pathname === "/v1/trades") {
       let payload: unknown;

@@ -12,6 +12,10 @@ Open the Worker URL in a browser to sign in to the read-only dashboard. The dash
 
 All trade endpoints require `Authorization: Bearer <INGEST_TOKEN>`.
 
+## MCP endpoint
+
+An authenticated Streamable HTTP MCP endpoint is available at `https://drnoob.saeid00065.workers.dev/mcp`. Configure an MCP client with the same bearer token used by the EA. It exposes `list_mt5_accounts` and `list_mt5_trades`, both read-only tools over the synced D1 records.
+
 ## MetaTrader payload
 
 Configure an Expert Advisor to POST closed deals to `https://drnoob.<your-subdomain>.workers.dev/v1/trades` with this JSON:
