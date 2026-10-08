@@ -2,6 +2,8 @@
 
 This Cloudflare Worker accepts **read-only closed-trade** records from an MT4/MT5 Expert Advisor and stores them in D1. It never receives broker passwords and cannot place, modify, or close orders.
 
+Open the Worker URL in a browser to sign in to the read-only dashboard. The dashboard password is stored in Cloudflare as `PANEL_PASSWORD`; it is separate from the ingestion token.
+
 ## Endpoints
 
 - `GET /health` returns the Worker status.
