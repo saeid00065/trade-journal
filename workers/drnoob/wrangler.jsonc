@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "drnoob",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-08",
+  "d1_databases": [
+    {
+      "binding": "TRADES",
+      "database_name": "drnoob-trades",
+      "database_id": "3a0a0b27-3c52-439e-aa8d-114a15822dee"
+    }
+  ]
+}
